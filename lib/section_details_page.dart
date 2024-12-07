@@ -3,7 +3,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:projectppufeeds/display_posts_page.dart';
-import 'package:projectppufeeds/subscribe_course_page.dart';
 
 class CourseSectionPage extends StatefulWidget {
   final int courseId;
@@ -18,6 +17,7 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   String? token;
   Map<int, bool> subscriptionStatus = {}; // Track subscription status for each section
+  Map<int, int> subscriptionIds = {}; // Track subscription IDs for each section
 
   // Fetch sections and token
   Future<List<Map<String, dynamic>>> fetchSections() async {
@@ -34,10 +34,6 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
           'Authorization': ' $token',
         },
       );
-
-      print("Authorization Token: $token");
-      print("Response Status: ${response.statusCode}");
-      print("Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -71,26 +67,17 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
         },
       );
 
-      print("Subscribe Response Status: ${response.statusCode}");
-      print("Subscribe Response Body: ${response.body}");
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data.containsKey('subscription_id')) {
           setState(() {
-            // Mark the section as subscribed
             subscriptionStatus[sectionId] = true;
+            subscriptionIds[sectionId] = data['subscription_id']; // Store subscription ID
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Successfully subscribed to section $sectionId!'),
               backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SubscriptionsPage(),
             ),
           );
         } else {
@@ -107,6 +94,52 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  // Unsubscribe from a section
+  Future<void> removeSubscription(int sectionId) async {
+    try {
+      token = await _storage.read(key: 'session_token');
+
+      if (token == null || token!.isEmpty) {
+        throw Exception('Session token not found. Please log in again.');
+      }
+
+      final subscriptionId = subscriptionIds[sectionId];
+      if (subscriptionId == null) {
+        throw Exception('Subscription ID not found for section $sectionId.');
+      }
+
+      final response = await http.delete(
+        Uri.parse('http://feeds.ppu.edu/api/v1/courses/${widget.courseId}/sections/$sectionId/subscribe/$subscriptionId'),
+        headers: {
+          'Authorization': '$token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'subscription deleted') {
+          setState(() {
+            subscriptionStatus[sectionId] = false;
+            subscriptionIds.remove(sectionId); 
+          });
+         
+        } else {
+          throw Exception('Unexpected response: ${response.body}');
+        }
+      } else {
+        throw Exception('Failed to unsubscribe. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+     
+       ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Successfully unsubscribed from section $sectionId!'),
+              backgroundColor: Colors.green,
+            ),
+          );
     }
   }
 
@@ -134,7 +167,7 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: FutureBuilder<List<Map<String, dynamic>>>( 
+        child: FutureBuilder<List<Map<String, dynamic>>>(
           future: fetchSections(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -165,14 +198,14 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
                   final section = sections[index];
                   final sectionId = section['id'];
                   final courseName = section['course'];
-                  final isSubscribed = subscriptionStatus[sectionId] ?? false; // Check if the section is subscribed
+                  final isSubscribed = subscriptionStatus[sectionId] ?? false;
 
                   return Card(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12), // Adjust the radius for a more professional look
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     color: Colors.white,
-                    elevation: 8, // Increase elevation for a more elevated look
+                    elevation: 8,
                     margin: EdgeInsets.only(bottom: 16),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -199,7 +232,7 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Section ID: $sectionId',
+                                                    'Section ID: $sectionId',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -226,13 +259,17 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
                               ),
                               IconButton(
                                 onPressed: () {
-                                  subscribeToSection(sectionId);
+                                  if (isSubscribed) {
+                                    removeSubscription(sectionId);
+                                  } else {
+                                    subscribeToSection(sectionId);
+                                  }
                                 },
                                 icon: Icon(
-                                  isSubscribed ? Icons.check_circle : Icons.add_circle,
-                                  color: isSubscribed ? Colors.green : Colors.red,
+                                  isSubscribed ? Icons.remove_circle : Icons.add_circle,
+                                  color: isSubscribed ? Colors.red : Colors.green,
                                 ),
-                                tooltip: isSubscribed ? 'Subscribed' : 'Subscribe',
+                                tooltip: isSubscribed ? 'Unsubscribe' : 'Subscribe',
                               ),
                             ],
                           ),
@@ -249,3 +286,4 @@ class _CourseSectionPageState extends State<CourseSectionPage> {
     );
   }
 }
+

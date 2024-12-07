@@ -41,6 +41,10 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     }
   }
 
+
+
+
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -157,6 +161,8 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                               ],
                             ),
                           ),
+                          
+
                         ],
                       ),
                     ),
@@ -167,7 +173,6 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
           },
         ),
       ),
-     
     );
   }
 }

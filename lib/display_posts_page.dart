@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:projectppufeeds/course_comment_page.dart';
+
 
 class CoursePostsPage extends StatefulWidget {
   final int courseId;
@@ -85,72 +87,80 @@ class _CoursePostsPageState extends State<CoursePostsPage> {
                     var post = posts[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 8,
-                        shadowColor: Colors.black38,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Post Body (Main content)
-                              Text(
-                                post['body'] ?? 'No Title',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.indigo,
+                      child: GestureDetector(
+                        onTap: () {
+                          // Navigate to the comments page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CourseCommentsPage(
+                                courseId: widget.courseId,
+                                sectionId: widget.sectionId,
+                                postId: post['id'],
+                              ),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 8,
+                          shadowColor: Colors.black38,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Post Body (Main content)
+                                Text(
+                                  post['body'] ?? 'No Title',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.indigo,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 8.0),
-
-                              // Post Date with time icon
-                              Row(
-                                children: [
-                                  Icon(Icons.access_time, color: Colors.grey[600], size: 16),
-                                  SizedBox(width: 8.0),
-                                  Text(
-                                    post['date_posted'] ?? 'No date available',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
+                                SizedBox(height: 8.0),
+                                // Post Date with time icon
+                                Row(
+                                  children: [
+                                    Icon(Icons.access_time, color: Colors.grey[600], size: 16),
+                                    SizedBox(width: 8.0),
+                                    Text(
+                                      post['date_posted'] ?? 'No date available',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 10.0),
-
-                              // Author Section with an icon
-                              Row(
-                                children: [
-                                  Icon(Icons.person, color: Colors.grey[600], size: 16),
-                                  SizedBox(width: 8.0),
-                                  Text(
-                                    post['author'] ?? 'Unknown',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
+                                  ],
+                                ),
+                                SizedBox(height: 10.0),
+                                // Author Section with an icon
+                                Row(
+                                  children: [
+                                    Icon(Icons.person, color: Colors.grey[600], size: 16),
+                                    SizedBox(width: 8.0),
+                                    Text(
+                                      post['author'] ?? 'Unknown',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                  ),
-                                  Spacer(),
-                                  Icon(Icons.comment, color: Colors.grey[600], size: 16),
-                                  SizedBox(width: 8.0),
-                                  Icon(Icons.thumb_up, color: Colors.grey[600], size: 16),
-                                ],
-                              ),
-                              SizedBox(height: 12),
-
-                              // Divider between posts for cleaner look
-                              Divider(
-                                color: Colors.grey[300],
-                                thickness: 1,
-                              ),
-                            ],
+                                  ],
+                                ),
+                                SizedBox(height: 12),
+                                // Divider between posts for cleaner look
+                                Divider(
+                                  color: Colors.grey[300],
+                                  thickness: 1,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

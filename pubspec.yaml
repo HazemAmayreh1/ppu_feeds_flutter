@@ -33,6 +33,8 @@ dependencies:
   http: any
   async: any
   flutter_secure_storage: ^5.0.2 
+  intl: ^0.18.0
+  shared_preferences: ^2.1.0
 
 
 
